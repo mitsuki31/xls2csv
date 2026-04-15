@@ -1,0 +1,14 @@
+[project]
+name = "xls2csv-cli"
+version = "0.1.0"
+description = "Simple but professional CLI tool to convert Excel files to CSV"
+authors = [
+    { name="Ryuu Mitsuki", email="dhefam31@proton.me" }
+]
+dependencies = [
+    "openpyxl",
+    "click"
+]
+
+[project.scripts]
+xls2csv = "xls2csv.cli:cli"
