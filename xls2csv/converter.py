@@ -1,11 +1,12 @@
 import csv
 from pathlib import Path
-from typing import Union, Optional, Set
+from typing import Optional, Set, List, Tuple
 
 from openpyxl import load_workbook
 
-from xls2csv.utils import PathLike, sanitize_filename as _sanitize_filename
+from xls2csv.utils import PathLike, format_output_name
 
+DEFAULT_TEMPLATE: str = "%name%-[%sheet%].csv"
 # .xls is not supported due to openpyxl limitation and that's legacy format anyway
 SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xlsb", ".xlsm" }
 
@@ -15,7 +16,8 @@ def convert_single(
     /,
     *,
     sheet: Optional[str] = None,
-    all_sheets: bool = False
+    all_sheets: bool = False,
+    template: Optional[str] = None
 ) -> None:
     """
     Convert a single Excel file to CSV format.
@@ -25,6 +27,7 @@ def convert_single(
         output (str or Path-like object, optional): Path to the output CSV file.
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
+        template (str, optional): Template for the output file name. Default to `"%(name)-%(sheet).csv"`.
 
     Raises:
         FileNotFoundError: If the Excel file is not found.
@@ -56,25 +59,40 @@ def convert_single(
         else:
             if not wb.sheetnames:
                 raise ValueError(f"No sheets found in '{excel_file.name}'")
-            sheets = [wb.active.title]
+            sheets = [wb.active.title if wb.active else wb.sheetnames[0]]
 
         output_path = Path(output) if output is not None else None
+        output_is_file = output_path and output_path.suffix.lower() == ".csv"
 
-        if output_path is not None and output_path.suffix.lower() == ".csv" and len(sheets) > 1:
+        if output_is_file and len(sheets) > 1:
             raise ValueError("A single output CSV path cannot be used with multiple sheets")
 
-        if output_path is not None and output_path.suffix.lower() != ".csv":
+        template = template or DEFAULT_TEMPLATE
+
+        if output_path and not output_is_file:
             output_path.mkdir(parents=True, exist_ok=True)
 
         for sheet_name in sheets:
             ws = wb[sheet_name]
 
+            # --- filename generation ---
+            filename = format_output_name(
+                template,
+                file=excel_file,
+                sheet=sheet_name
+            )
+
+            # ensure extension
+            if not filename.lower().endswith(".csv"):
+                filename += ".csv"
+
+            # --- resolve target path ---
             if output_path is None:
-                target = excel_file.parent / f"{excel_file.stem}-[{_sanitize_filename(sheet_name)}].csv"
-            elif output_path.suffix.lower() == ".csv":
+                target = excel_file.parent / filename
+            elif output_is_file:
                 target = output_path
             else:
-                target = output_path / f"{excel_file.stem}-[{_sanitize_filename(sheet_name)}].csv"
+                target = output_path / filename
 
             with target.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
@@ -89,7 +107,8 @@ def convert_batch(
     /,
     *,
     sheet: Optional[str] = None,
-    all_sheets: bool = False
+    all_sheets: bool = False,
+    template: Optional[str] = None
 ) -> None:
     """
     Convert all Excel files in a folder to CSV format.
@@ -99,6 +118,7 @@ def convert_batch(
         output (str or Path-like object, optional): Path to the output folder. Default to the same folder as the Excel files.
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
+        template (str, optional): Template for the output file name. Default to `"%(name)-%(sheet).csv"`.
 
     Raises:
         FileNotFoundError: If the folder is not found.
@@ -135,7 +155,7 @@ def convert_batch(
     if not excel_files:
         raise ValueError(f"No Excel files found in: {folder}")
 
-    errors: list[tuple[Path, Exception]] = []
+    errors: List[Tuple[Path, Exception]] = []
 
     for excel_file in excel_files:
         try:
@@ -144,7 +164,8 @@ def convert_batch(
                 excel_file,
                 output_path,
                 sheet=sheet,
-                all_sheets=all_sheets
+                all_sheets=all_sheets,
+                template=template
             )
         except Exception as e:
             errors.append((excel_file, e))

@@ -1,7 +1,9 @@
 from pathlib import Path
-from typing import Optional, TypeAlias, Union
+from typing import Optional, Set, TypeAlias, Union
 
 PathLike: TypeAlias = Union[str, Path]
+
+SUPPORTED_PLACEHOLDERS: Set[str] = { "%(name)", "%(ext)", "%(sheet)" }
 
 def sanitize_filename(name: str) -> str:
     """
@@ -26,9 +28,9 @@ def format_output_name(
     Format output filename using a limited placeholder system.
 
     Supported placeholders:
-        `%name%`  -> file name without extension
-        `%ext%`   -> file extension (without dot)
-        `%sheet%` -> sheet name (sanitized)
+        `%(name)`  -> file name without extension
+        `%(ext)`   -> file extension (without dot)
+        `%(sheet)` -> sheet name (sanitized)
 
     Args:
         template (str): Template string.
@@ -45,12 +47,12 @@ def format_output_name(
     sheet_safe = sanitize_filename(sheet) if sheet else ""
 
     result = template
-    result = result.replace("%name%", name)
-    result = result.replace("%ext%", ext)
+    result = result.replace("%(name)", name)
+    result = result.replace("%(ext)", ext)
 
-    if "%sheet%" in result:
+    if "%(sheet)" in result:
         if sheet is None:
-            raise ValueError("Template requires '%sheet%' but no sheet was provided")
-        result = result.replace("%sheet%", sheet_safe)
+            raise ValueError("Template requires '%(sheet)' but no sheet was provided")
+        result = result.replace("%(sheet)", sheet_safe)
 
     return result

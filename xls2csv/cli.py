@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import click
 from pathlib import Path
 from typing import Optional
@@ -7,6 +9,7 @@ from typing import Optional
 from xls2csv.converter import (
     convert_single,
     convert_batch,
+    DEFAULT_TEMPLATE,
     SUPPORTED_EXTS
 )
 
@@ -17,11 +20,18 @@ from xls2csv.converter import (
     type=click.Path(path_type=Path),
     help="Output file or directory"
 )
+@click.option(
+    "-t", "--template",
+    type=str,
+    default=DEFAULT_TEMPLATE,
+    help=f"Template for the output file name. Default to \"{DEFAULT_TEMPLATE}\""
+)
 @click.option("-s", "--sheet", help="Specific sheet name")
 @click.option("--all-sheets", is_flag=True, help="Export all sheets")
 def cli(
     input_path: Path,
     output: Optional[Path],
+    template: Optional[str],
     sheet: Optional[str],
     all_sheets: bool
 ):
@@ -46,6 +56,7 @@ def cli(
         convert_batch(
             input_path,
             output,
+            template=template,
             sheet=sheet,
             all_sheets=all_sheets
         )
@@ -61,9 +72,16 @@ def cli(
                 "Format .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first."
             )
 
+        if input_path.suffix.lower() not in SUPPORTED_EXTS:
+            raise click.BadParameter(
+                f"Unsupported file type: {input_path.suffix}\n"
+                f"Supported types: {', '.join(SUPPORTED_EXTS)}"
+            )
+
         convert_single(
             input_path,
             output,
+            template=template,
             sheet=sheet,
             all_sheets=all_sheets
         )
