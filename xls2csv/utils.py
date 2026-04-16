@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Optional, Set, TypeAlias, Union
 
@@ -33,6 +34,11 @@ def format_output_name(
         `%(name)`  -> file name without extension
         `%(ext)`   -> output file extension (without dot)
         `%(sheet)` -> sheet name (sanitized)
+        `%(date)`  -> current date in `YYYY-MM-DD` format
+        `%(year)`  -> current year in `YYYY` format
+        `%(month)` -> current month in `MM` format
+        `%(day)`   -> current day in `DD` format
+        `%(day_s)`  -> current day of week in `DDD` format (e.g., Mon)
 
     Args:
         template (str): Template string.
@@ -48,10 +54,21 @@ def format_output_name(
     ext = ext or file.suffix.lstrip(".")
     # Sanitize sheet name because will be used in filename
     sheet_safe = sanitize_filename(sheet) if sheet else ""
+    today_dt = datetime.now()
+    date_str = today_dt.strftime("%Y-%m-%d")  # YYYY-MM-DD
+    year_str = today_dt.strftime("%Y")  # YYYY
+    month_str = today_dt.strftime("%m")  # MM
+    day_str = today_dt.strftime("%d")  # DD
+    day_s_str = today_dt.strftime("%a")  # Mon
 
     result = template
     result = result.replace("%(name)", name)
     result = result.replace("%(ext)", ext)
+    result = result.replace("%(date)", date_str)
+    result = result.replace("%(year)", year_str)
+    result = result.replace("%(month)", month_str)
+    result = result.replace("%(day)", day_str)
+    result = result.replace("%(day_s)", day_s_str)
 
     if "%(sheet)" in result:
         if sheet is None:
