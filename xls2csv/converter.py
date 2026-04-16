@@ -4,9 +4,8 @@ from typing import Optional, Set, List, Tuple
 
 from openpyxl import load_workbook
 
-from xls2csv.utils import PathLike, format_output_name
+from xls2csv.utils import DEFAULT_TEMPLATE, PathLike, format_output_name
 
-DEFAULT_TEMPLATE: str = "%name%-[%sheet%].csv"
 # .xls is not supported due to openpyxl limitation and that's legacy format anyway
 SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xlsb", ".xlsm" }
 
@@ -27,7 +26,7 @@ def convert_single(
         output (str or Path-like object, optional): Path to the output CSV file.
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
-        template (str, optional): Template for the output file name. Default to `"%(name)-%(sheet).csv"`.
+        template (str, optional): Template for the output file name. Default to `"%(name)-[%(sheet)].%(ext)"`.
 
     Raises:
         FileNotFoundError: If the Excel file is not found.
@@ -79,12 +78,9 @@ def convert_single(
             filename = format_output_name(
                 template,
                 file=excel_file,
-                sheet=sheet_name
+                sheet=sheet_name,
+                ext="csv"
             )
-
-            # ensure extension
-            if not filename.lower().endswith(".csv"):
-                filename += ".csv"
 
             # --- resolve target path ---
             if output_path is None:
@@ -118,7 +114,7 @@ def convert_batch(
         output (str or Path-like object, optional): Path to the output folder. Default to the same folder as the Excel files.
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
-        template (str, optional): Template for the output file name. Default to `"%(name)-%(sheet).csv"`.
+        template (str, optional): Template for the output file name. Default to `"%(name)-[%(sheet)].%(ext)"`.
 
     Raises:
         FileNotFoundError: If the folder is not found.

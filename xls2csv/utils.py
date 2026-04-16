@@ -3,7 +3,8 @@ from typing import Optional, Set, TypeAlias, Union
 
 PathLike: TypeAlias = Union[str, Path]
 
-SUPPORTED_PLACEHOLDERS: Set[str] = { "%(name)", "%(ext)", "%(sheet)" }
+DEFAULT_TEMPLATE: str = "%(name)-[%(sheet)].%(ext)"
+SUPPORTED_PLACEHOLDERS: Set[str] = { "%(name)", "%(ext)", "%(sheet)", "%(date)" }
 
 def sanitize_filename(name: str) -> str:
     """
@@ -22,6 +23,7 @@ def format_output_name(
     template: str,
     *,
     file: PathLike,
+    ext: Optional[str] = None,
     sheet: Optional[str] = None,
 ) -> str:
     """
@@ -29,12 +31,13 @@ def format_output_name(
 
     Supported placeholders:
         `%(name)`  -> file name without extension
-        `%(ext)`   -> file extension (without dot)
+        `%(ext)`   -> output file extension (without dot)
         `%(sheet)` -> sheet name (sanitized)
 
     Args:
         template (str): Template string.
         file (PathLike): Source Excel file.
+        ext (str, optional): Output file extension (without dot). Default to extension of `file`.
         sheet (str, optional): Sheet name.
 
     Returns:
@@ -42,7 +45,7 @@ def format_output_name(
     """
     file = Path(file)
     name = file.stem
-    ext = file.suffix.lstrip(".")
+    ext = ext or file.suffix.lstrip(".")
     # Sanitize sheet name because will be used in filename
     sheet_safe = sanitize_filename(sheet) if sheet else ""
 
@@ -52,7 +55,7 @@ def format_output_name(
 
     if "%(sheet)" in result:
         if sheet is None:
-            raise ValueError("Template requires '%(sheet)' but no sheet was provided")
+            raise ValueError("Template requires '%(sheet)' but no sheet name was provided")
         result = result.replace("%(sheet)", sheet_safe)
 
     return result
