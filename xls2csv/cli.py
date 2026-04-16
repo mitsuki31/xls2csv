@@ -4,7 +4,11 @@ import click
 from pathlib import Path
 from typing import Optional
 
-from xls2csv.converter import convert_single, convert_batch
+from xls2csv.converter import (
+    convert_single,
+    convert_batch,
+    SUPPORTED_EXTS
+)
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("input_path", type=click.Path(path_type=Path))
@@ -50,6 +54,12 @@ def cli(
         # Single file mode
         if not input_path.is_file():
             raise click.BadParameter(f"Invalid file: {input_path}")
+
+        # Raise error to convert first if the file is .xls
+        if input_path.suffix.lower() == ".xls":
+            raise click.BadParameter(
+                "Format .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first."
+            )
 
         convert_single(
             input_path,

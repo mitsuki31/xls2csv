@@ -6,7 +6,8 @@ from openpyxl import load_workbook
 
 from xls2csv.utils import PathLike, sanitize_filename as _sanitize_filename
 
-SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xls", ".xlsm" }
+# .xls is not supported due to openpyxl limitation and that's legacy format anyway
+SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xlsb", ".xlsm" }
 
 def convert_single(
     excel_file: PathLike,
