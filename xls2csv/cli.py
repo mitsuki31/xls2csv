@@ -28,12 +28,14 @@ from xls2csv.converter import (
 )
 @click.option("-s", "--sheet", help="Specific sheet name")
 @click.option("--all-sheets", is_flag=True, help="Export all sheets")
+@click.option("-f", "--force", "--overwrite", is_flag=True, help="Overwrite existing files")
 def cli(
     input_path: Path,
     output: Optional[Path],
     template: Optional[str],
     sheet: Optional[str],
-    all_sheets: bool
+    all_sheets: bool,
+    force: bool
 ):
     """Convert Excel file(s) to CSV.
 
@@ -59,7 +61,8 @@ def cli(
                 output,
                 template=template,
                 sheet=sheet,
-                all_sheets=all_sheets
+                all_sheets=all_sheets,
+                overwrite=force
             )
         except Exception as e:
             raise click.ClickException(f"[{e.__class__.__name__}] {e}")
@@ -86,7 +89,8 @@ def cli(
                 output,
                 template=template,
                 sheet=sheet,
-                all_sheets=all_sheets
+                all_sheets=all_sheets,
+                overwrite=force
             )
         except Exception as e:
             raise click.ClickException(f"[{e.__class__.__name__}] {e}")

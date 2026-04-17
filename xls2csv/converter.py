@@ -1,4 +1,5 @@
 import csv
+import sys
 from pathlib import Path
 from typing import Optional, Set, List, Tuple
 
@@ -16,7 +17,8 @@ def convert_single(
     *,
     sheet: Optional[str] = None,
     all_sheets: bool = False,
-    template: Optional[str] = None
+    template: Optional[str] = None,
+    overwrite: bool = False
 ) -> None:
     """
     Convert a single Excel file to CSV format.
@@ -27,6 +29,7 @@ def convert_single(
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
         template (str, optional): Template for the output file name. Default to `"%(name)-[%(sheet)].%(ext)"`.
+        overwrite (bool, optional): Whether to overwrite existing files. Default to False.
 
     Raises:
         FileNotFoundError: If the Excel file is not found.
@@ -90,10 +93,14 @@ def convert_single(
             else:
                 target = output_path / filename
 
+            if target.exists() and not overwrite:
+                raise FileExistsError(f"File '{target}' already exists. Use --overwrite to overwrite it.")
+
             with target.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 for row in ws.iter_rows(values_only=True):
                     writer.writerow(row)
+            print(f"Converted: '{excel_file}' ({sheet_name}) -> '{target}'")
     finally:
         wb.close()
 
@@ -104,7 +111,8 @@ def convert_batch(
     *,
     sheet: Optional[str] = None,
     all_sheets: bool = False,
-    template: Optional[str] = None
+    template: Optional[str] = None,
+    overwrite: bool = False
 ) -> None:
     """
     Convert all Excel files in a folder to CSV format.
@@ -115,6 +123,7 @@ def convert_batch(
         sheet (str, optional): Name of the sheet to convert. Default to active sheet.
         all_sheets (bool, optional): Whether to convert all sheets. Default to active sheet.
         template (str, optional): Template for the output file name. Default to `"%(name)-[%(sheet)].%(ext)"`.
+        overwrite (bool, optional): Whether to overwrite existing files. Default to False.
 
     Raises:
         FileNotFoundError: If the folder is not found.
@@ -161,7 +170,8 @@ def convert_batch(
                 output_path,
                 sheet=sheet,
                 all_sheets=all_sheets,
-                template=template
+                template=template,
+                overwrite=overwrite
             )
         except Exception as e:
             errors.append((excel_file, e))
