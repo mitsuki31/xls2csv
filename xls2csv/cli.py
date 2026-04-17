@@ -42,49 +42,54 @@ def cli(
 
     # --- validation ---
     if not input_path.exists():
-        raise click.BadParameter(f"Path not found: {input_path}")
+        raise click.ClickException(f"Path not found: {input_path}")
 
     if sheet and all_sheets:
-        raise click.BadParameter("Use either --sheet or --all-sheets, not both")
+        raise click.BadArgumentUsage("Use either --sheet or --all-sheets, not both")
 
     # --- dispatch ---
     if input_path.is_dir():
         # Batch mode
         if output and output.suffix:
-            raise click.BadParameter("Batch output must be a directory")
+            raise click.BadOptionUsage("--output", "Batch output must be a directory")
 
-        convert_batch(
-            input_path,
-            output,
-            template=template,
-            sheet=sheet,
-            all_sheets=all_sheets
-        )
-
+        try:
+            convert_batch(
+                input_path,
+                output,
+                template=template,
+                sheet=sheet,
+                all_sheets=all_sheets
+            )
+        except Exception as e:
+            raise click.ClickException(f"[{e.__class__.__name__}] {e}")
     else:
         # Single file mode
         if not input_path.is_file():
-            raise click.BadParameter(f"Invalid file: {input_path}")
+            raise click.FileError(str(input_path), "File cannot be processed")
 
-        # Raise error to convert first if the file is .xls
+        # Raise error to convert first if the file is .xls (legacy format)
         if input_path.suffix.lower() == ".xls":
-            raise click.BadParameter(
-                "Format .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first."
+            raise click.ClickException(
+                "Invalid format: .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first."
             )
 
         if input_path.suffix.lower() not in SUPPORTED_EXTS:
-            raise click.BadParameter(
+            raise click.ClickException(
                 f"Unsupported file type: {input_path.suffix}\n"
                 f"Supported types: {', '.join(SUPPORTED_EXTS)}"
             )
 
-        convert_single(
-            input_path,
-            output,
-            template=template,
-            sheet=sheet,
-            all_sheets=all_sheets
-        )
+        try:
+            convert_single(
+                input_path,
+                output,
+                template=template,
+                sheet=sheet,
+                all_sheets=all_sheets
+            )
+        except Exception as e:
+            raise click.ClickException(f"[{e.__class__.__name__}] {e}")
 
 if __name__ == "__main__":
     cli()
