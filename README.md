@@ -176,7 +176,7 @@ xls2csv [OPTIONS] INPUT_PATH
 - File → single conversion
 - Directory → batch conversion
 
-See [options](#options) for more detailed information.
+See [options](#options--behavior) for more detailed information.
 
 > [!NOTE]  
 > - Sheet names are sanitized for filesystem compatibility
