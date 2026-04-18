@@ -34,6 +34,17 @@ By converting to CSV, you can have an emergency backup of your Excel data that c
 - **Excel to CSV Conversion** – Convert a single Excel file into CSV format
 - **Batch Processing** – Convert entire folders of Excel files in one command
 
+### Supported Excel Files
+
+| File Type                     | Extension | Supported |
+| ----------------------------- | :-------- | :-------: |
+| Excel 97-2003 Workbook        | `.xls`    | ❌        |
+| Excel Workbook                | `.xlsx`   | ✅        |
+| Excel Macro-Enabled Workbook  | `.xlsm`   | ✅        |
+| Excel Binary Workbook         | `.xlsb`   | ✅        |
+| Excel Open XML Spreadsheet    | `.ods`    | ❌        |
+
+
 ### Export Options
 
 - Active sheet (default behavior)
@@ -75,21 +86,29 @@ What began as a small utility script evolved into a dedicated CLI tool focused o
 
 [`pipx`](https://pipx.pypa.io/stable/) is a tool for installing and running Python applications in isolated environments. Best for Ubuntu 23.04+, Debian 12+, and Fedora 38+ (these are distros that adopts [PEP 668](https://peps.python.org/pep-0668/)).
 
-Install `pipx`:
+#### Install `pipx`
 
 ```bash
 sudo apt install pipx
 ```
 
-> Or, check [pipx installation guide](https://pipx.pypa.io/stable/how-to/install-pipx/) for more information on how to install `pipx`.
+For Windows users:
 
-Install `xls2csv`:
-
-```bash
-pipx install git+https://github.com/mitsuki31/xls2csv.git
+```powershell
+python -m pip install pipx && python -m pipx ensurepath
 ```
 
-After installation:
+> Or, check [`pipx` installation guide](https://pipx.pypa.io/stable/how-to/install-pipx/) for more information on how to install `pipx`.
+
+---
+
+#### Install `xls2csv`
+
+```bash
+pipx install git+https://github.com/mitsuki31/xls2csv.git@latest
+```
+
+#### Verify installation
 
 ```bash
 xls2csv --version
@@ -103,7 +122,7 @@ xls2csv --version
 > Recommended to use `pipx` instead, `pip` can sometimes cause dependency conflicts in some environments.
 
 ```bash
-pip install git+https://github.com/mitsuki31/xls2csv.git
+pip install git+https://github.com/mitsuki31/xls2csv.git@latest
 ```
 > You may need `--user` depending on your environment.
 
