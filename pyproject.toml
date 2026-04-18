@@ -3,8 +3,8 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "xls2csv-cli"
-version = "0.1.0"
+name = "xls2csv"
+version = "0.2.0"
 description = "Simple but professional CLI tool to convert Excel files to CSV"
 readme = "README.md"
 requires-python = ">=3.10"

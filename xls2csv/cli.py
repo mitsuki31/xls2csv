@@ -13,7 +13,7 @@ from xls2csv.converter import (
     SUPPORTED_EXTS
 )
 
-__VERSION__ = "0.1.0"
+__VERSION__ = "0.2.0"
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("input_path", type=click.Path(path_type=Path))
