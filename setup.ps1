@@ -1,7 +1,24 @@
 $VENV_DIR = ".venv"
 
+$python = Get-Command py -ErrorAction SilentlyContinue
+
+# Fallback to python if py is not found
+if (-not $python) {
+    $python = Get-Command python -ErrorAction SilentlyContinue
+}
+
+# Fallback to python3 if python is not found
+if (-not $python) {
+    $python = Get-Command python3 -ErrorAction SilentlyContinue
+}
+
+if (-not $python) {
+    Write-Error "Python not found. Please install Python v3 and ensure it's in PATH."
+    exit 1
+}
+
 Write-Host "[1/4] Creating virtual environment..."
-python.exe -m venv $VENV_DIR
+& "$python" -m venv $VENV_DIR
 
 Write-Host "[2/4] Upgrading pip (inside venv)..."
 & "$VENV_DIR\Scripts\python.exe" -m pip install --upgrade pip
