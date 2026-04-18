@@ -13,6 +13,8 @@ from xls2csv.converter import (
     SUPPORTED_EXTS
 )
 
+__VERSION__ = "0.1.0"
+
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("input_path", type=click.Path(path_type=Path))
 @click.option(
@@ -29,6 +31,13 @@ from xls2csv.converter import (
 @click.option("-s", "--sheet", help="Specific sheet name")
 @click.option("--all-sheets", is_flag=True, help="Export all sheets")
 @click.option("-f", "--force", "--overwrite", is_flag=True, help="Overwrite existing files")
+@click.version_option(
+    __VERSION__,
+    "-v",
+    "--version",
+    prog_name="xls2csv",
+    message="-- %(prog)s v%(version)s --"
+)
 def cli(
     input_path: Path,
     output: Optional[Path],
