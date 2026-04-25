@@ -16,6 +16,7 @@ from xls2csv.converter import (
 )
 from xls2csv.exception import (
     ERROR_CODES,
+    EXIT_CODES,
     format_err,
     BatchProcessingError,
     NotAnExcelFileError,
@@ -95,7 +96,8 @@ def cli(
             errors_msg = f"Batch conversion failed: {len(errors)} error(s) occurred\n"
             for error in errors:
                 errors_msg += f"- {format_err(error, with_type=False)}\n"
-            raise click.ClickException(errors_msg)
+
+            raise BatchProcessingError(errors_msg.strip(), errors=errors) from be
     else:
         # Single file mode
         if not input_path.is_file():
@@ -133,4 +135,4 @@ if __name__ == "__main__":
     # pylint: disable=broad-except
     except Exception as e:
         print(format_err(e, with_code=True), file=sys.stderr)
-        sys.exit(1)
+        sys.exit(EXIT_CODES.get(getattr(e, "code", "E_UNKNOWN"), 1))
