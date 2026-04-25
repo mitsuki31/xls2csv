@@ -1,11 +1,11 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Set, TypeAlias, Union
+from typing import Generator, LiteralString, Optional, Set, TypeAlias, Union
 
 PathLike: TypeAlias = Union[str, Path]
 
-DEFAULT_TEMPLATE: str = "%(name)-[%(sheet)].%(ext)"
-SUPPORTED_PLACEHOLDERS: Set[str] = { "%(name)", "%(ext)", "%(sheet)", "%(date)" }
+DEFAULT_TEMPLATE: LiteralString = "%(name)-[%(sheet)].%(ext)"
+SUPPORTED_PLACEHOLDERS: Set[LiteralString] = { "%(name)", "%(ext)", "%(sheet)", "%(date)" }
 
 def sanitize_filename(name: str) -> str:
     """
@@ -76,3 +76,19 @@ def format_output_name(
         result = result.replace("%(sheet)", sheet_safe)
 
     return result
+
+def print_summary(from_path: Path, to_path: Path, sheet_name: str, total_rows: int) -> None:
+    """
+    Print summary of the conversion.
+
+    Args:
+        from_path (Path): Path to the source Excel file.
+        to_path (Path): Path to the output CSV file.
+        sheet_name (str): Name of the sheet converted.
+        total_rows (int): Total number of rows written.
+    """
+    target_size = to_path.stat().st_size
+    print(f"Converted: \"{from_path}::{sheet_name}\" -> \"{to_path}\"")
+    print(f"  >> {total_rows} rows written")
+    print(f"  >> Total size: {target_size / 1024:.2f} KB ({target_size} bytes)")
+
