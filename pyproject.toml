@@ -18,9 +18,17 @@ dependencies = [
     "click"
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
 [project.scripts]
 xls2csv = "xls2csv.cli:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["xls2csv*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
