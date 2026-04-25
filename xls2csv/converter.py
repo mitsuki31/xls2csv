@@ -1,14 +1,25 @@
 import csv
-import sys
 from pathlib import Path
-from typing import Optional, Set, List, Tuple
+from typing import Optional, Set, List, LiteralString, Tuple
 
 from openpyxl import load_workbook
 
-from xls2csv.utils import DEFAULT_TEMPLATE, PathLike, format_output_name
+from xls2csv.exception import (
+    BatchProcessingError,
+    NoSheetFoundError,
+    NotAnExcelFileError,
+    OutputFileExistsError,
+    XLS2CSVError,
+)
+from xls2csv.utils import (
+    DEFAULT_TEMPLATE,
+    PathLike,
+    format_output_name,
+    print_summary,
+)
 
-# .xls is not supported due to openpyxl limitation and that's legacy format anyway
-SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xlsb", ".xlsm" }
+# .xls is not supported due to legacy format and openpyxl limitation
+SUPPORTED_EXTS: Set[LiteralString] = { ".xlsx", ".xlsb", ".xlsm" }
 
 def convert_single(
     excel_file: PathLike,
@@ -37,7 +48,7 @@ def convert_single(
 
     Returns:
         None
-    
+
     Notes:
         - If `output` is a folder, the CSV file will be saved in that folder.
         - If `output` is a file, the CSV file will be saved in that file.
@@ -56,18 +67,23 @@ def convert_single(
             sheets = wb.sheetnames
         elif sheet:
             if sheet not in wb.sheetnames:
-                raise ValueError(f"Sheet '{sheet}' not found in '{excel_file.name}'")
+                raise NoSheetFoundError(sheet, filepath=excel_file)
             sheets = [sheet]
         else:
             if not wb.sheetnames:
-                raise ValueError(f"No sheets found in '{excel_file.name}'")
+                # For edge case; typically, there's no Excel file without a sheet inside
+                raise NotAnExcelFileError(f"No sheets found in '{excel_file.name}'")
             sheets = [wb.active.title if wb.active else wb.sheetnames[0]]
 
         output_path = Path(output) if output is not None else None
         output_is_file = output_path and output_path.suffix.lower() == ".csv"
 
         if output_is_file and len(sheets) > 1:
-            raise ValueError("A single output CSV path cannot be used with multiple sheets")
+            raise XLS2CSVError(
+                "A single output CSV path cannot be used with multiple sheets",
+                filepath=excel_file,
+                err_code="E_IO"
+            )
 
         template = template or DEFAULT_TEMPLATE
 
@@ -94,13 +110,16 @@ def convert_single(
                 target = output_path / filename
 
             if target.exists() and not overwrite:
-                raise FileExistsError(f"File '{target}' already exists. Use --overwrite to overwrite it.")
+                raise OutputFileExistsError(filepath=target)
 
             with target.open("w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
+                total_rows: int = 0
                 for row in ws.iter_rows(values_only=True):
                     writer.writerow(row)
-            print(f"Converted: '{excel_file}' ({sheet_name}) -> '{target}'")
+                    total_rows += 1
+
+            print_summary(excel_file, target, sheet_name, total_rows)
     finally:
         wb.close()
 
@@ -139,16 +158,20 @@ def convert_batch(
         - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
     """
     folder = Path(folder)
+    premature_err = BatchProcessingError("Premature exit (precondition not met)")
 
     if not folder.exists():
-        raise FileNotFoundError(f"Folder not found: {folder}")
+        premature_err.add_error(FileNotFoundError(f"Folder not found: {folder}"))
+        raise premature_err
     if not folder.is_dir():
-        raise ValueError(f"Expected a directory, got: {folder}")
+        premature_err.add_error(NotADirectoryError(f"Expected a directory, got: {folder}"))
+        raise premature_err
 
     output_path = Path(output) if output else folder
 
     if output_path.exists() and not output_path.is_dir():
-        raise ValueError("Batch output must be a directory")
+        premature_err.add_error(NotADirectoryError("Batch output must be a directory"))
+        raise premature_err
 
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -158,13 +181,14 @@ def convert_batch(
     ]
 
     if not excel_files:
-        raise ValueError(f"No Excel files found in: {folder}")
+        premature_err.add_error(ValueError(f"No Excel files found in: {folder}"))
+        raise premature_err
 
     errors: List[Tuple[Path, Exception]] = []
 
     for excel_file in excel_files:
         try:
-            print(f"Processing: {excel_file.name}")
+            print(f"Processing: {excel_file} ({excel_file.stat().st_size / 1024:.2f} KB)")
             convert_single(
                 excel_file,
                 output_path,
@@ -173,12 +197,15 @@ def convert_batch(
                 template=template,
                 overwrite=overwrite
             )
-        except Exception as e:
+        except RuntimeError as e:
             errors.append((excel_file, e))
+        finally:
+            print("-" * 55)
 
     if errors:
-        message = "\n".join(
-            f"- {file.name}: {err.__class__.__name__}: {err}"
-            for file, err in errors
-        )
-        raise RuntimeError(f"Batch conversion failed:\n{message}")
+        err = BatchProcessingError("Batch conversion failed")
+        for _, e in errors:
+            err.add_error(e)
+        raise err
+
+    print(f"\n✅ {len(excel_files)} Excel file(s) converted successfully!")

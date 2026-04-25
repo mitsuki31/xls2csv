@@ -2,15 +2,25 @@
 
 from __future__ import annotations
 
-import click
+import sys
 from pathlib import Path
 from typing import Optional
+
+import click
 
 from xls2csv.converter import (
     convert_single,
     convert_batch,
     DEFAULT_TEMPLATE,
     SUPPORTED_EXTS
+)
+from xls2csv.exception import (
+    ERROR_CODES,
+    format_err,
+    BatchProcessingError,
+    NotAnExcelFileError,
+    UnsupportedFormatError,
+    XLS2CSVError,
 )
 
 __VERSION__ = "0.2.0"
@@ -49,14 +59,21 @@ def cli(
     """Convert Excel file(s) to CSV.
 
     INPUT_PATH can be a file (single conversion) or a folder (batch conversion).
+
+    This tool can automatically detect what mode to run based on the input path.
+    If the input path is a directory, it will run in batch mode.
+    Otherwise, it will run in single mode.
     """
 
     # --- validation ---
     if not input_path.exists():
-        raise click.ClickException(f"Path not found: {input_path}")
+        raise XLS2CSVError(
+            f"No such file or directory: {input_path.resolve()}",
+            err_code=ERROR_CODES["E_IO"]
+        )
 
     if sheet and all_sheets:
-        raise click.BadArgumentUsage("Use either --sheet or --all-sheets, not both")
+        raise click.BadOptionUsage("--sheet", "Use either --sheet or --all-sheets, not both")
 
     # --- dispatch ---
     if input_path.is_dir():
@@ -73,36 +90,47 @@ def cli(
                 all_sheets=all_sheets,
                 overwrite=force
             )
-        except Exception as e:
-            raise click.ClickException(f"[{e.__class__.__name__}] {e}")
+        except BatchProcessingError as be:
+            errors = be.errors
+            errors_msg = f"Batch conversion failed: {len(errors)} error(s) occurred\n"
+            for error in errors:
+                errors_msg += f"- {format_err(error, with_type=False)}\n"
+            raise click.ClickException(errors_msg)
     else:
         # Single file mode
         if not input_path.is_file():
-            raise click.FileError(str(input_path), "File cannot be processed")
+            raise NotAnExcelFileError("Unable to process the given file", filepath=input_path)
 
         # Raise error to convert first if the file is .xls (legacy format)
         if input_path.suffix.lower() == ".xls":
-            raise click.ClickException(
-                "Invalid format: .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first."
+            raise UnsupportedFormatError(
+                expected=SUPPORTED_EXTS,
+                actual=input_path.suffix,
+                message="Invalid format: .xls is a legacy and is not supported by this tool. Please convert it to .xlsx first.",
+                filepath=input_path
             )
 
         if input_path.suffix.lower() not in SUPPORTED_EXTS:
-            raise click.ClickException(
-                f"Unsupported file type: {input_path.suffix}\n"
-                f"Supported types: {', '.join(SUPPORTED_EXTS)}"
+            raise UnsupportedFormatError(
+                expected=SUPPORTED_EXTS,
+                actual=input_path.suffix,
+                filepath=input_path
             )
 
-        try:
-            convert_single(
-                input_path,
-                output,
-                template=template,
-                sheet=sheet,
-                all_sheets=all_sheets,
-                overwrite=force
-            )
-        except Exception as e:
-            raise click.ClickException(f"[{e.__class__.__name__}] {e}")
+        convert_single(
+            input_path,
+            output,
+            template=template,
+            sheet=sheet,
+            all_sheets=all_sheets,
+            overwrite=force
+        )
 
 if __name__ == "__main__":
-    cli()
+    try:
+        # pylint: disable=no-value-for-parameter
+        cli()
+    # pylint: disable=broad-except
+    except Exception as e:
+        print(format_err(e, with_code=True), file=sys.stderr)
+        sys.exit(1)
