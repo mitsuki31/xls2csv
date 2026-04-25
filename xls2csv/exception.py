@@ -12,12 +12,26 @@ ERROR_CODES = {
     "E_BATCHPROCESSING": "E_BATCHPROCESSING",
 }
 
+# NOTE: NOT STABLE! May change in the future.
+EXIT_CODES = {
+    "SUCCESS": 0,
+    "E_UNKNOWN": 1,
+    "E_IO": 2,
+    "E_FILEEXIST": 3,
+    "E_UNSUPPORTED": 4,
+    "E_NOTEXCELFILE": 5,
+    "E_SHEETNOTFOUND": 6,
+    "E_INVALIDDATA": 7,
+    "E_BATCHPROCESSING": 111,
+}
+
 _BPE = TypeVar("_BPE", bound="BatchProcessingError")
 class XLS2CSVError(RuntimeError):
     """
     Base exception class for XLS2CSV errors.
 
-    Provides some useful properties (e.g., :attr:`code`, :attr:`path`, :attr:`filename`) for better error context.
+    Provides some useful properties (e.g., :attr:`code`, :attr:`path`, :attr:`filename`)
+    for better error context.
     """
     def __init__(
         self, /,
