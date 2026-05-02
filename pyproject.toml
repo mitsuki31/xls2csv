@@ -24,7 +24,7 @@ dev = [
 ]
 
 [project.scripts]
-xls2csv = "xls2csv.cli:cli"
+xls2csv = "xls2csv.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

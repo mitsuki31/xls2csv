@@ -128,7 +128,9 @@ def cli(
             overwrite=force
         )
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the CLI tool"""
+
     try:
         # pylint: disable=no-value-for-parameter
         cli()
@@ -136,3 +138,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(format_err(e, with_code=True), file=sys.stderr)
         sys.exit(EXIT_CODES.get(getattr(e, "code", "E_UNKNOWN"), 1))
+
+if __name__ == "__main__":
+    main()
