@@ -16,6 +16,8 @@ from xls2csv.utils import (
     PathLike,
     format_output_name,
     print_summary,
+    is_excel_file,
+    iter_excels,
 )
 
 # .xls is not supported due to legacy format and openpyxl limitation
@@ -61,6 +63,9 @@ def convert_single(
     if not excel_file.exists():
         raise FileNotFoundError(f"Excel file not found: {excel_file}")
 
+    if not is_excel_file(excel_file, SUPPORTED_EXTS):
+        raise NotAnExcelFileError("Given file is not an Excel files", filepath=excel_file)
+
     wb = load_workbook(excel_file, data_only=True, read_only=True)
     try:
         if all_sheets:  # Take priority over sheet
@@ -72,7 +77,7 @@ def convert_single(
         else:
             if not wb.sheetnames:
                 # For edge case; typically, there's no Excel file without a sheet inside
-                raise NotAnExcelFileError(f"No sheets found in '{excel_file.name}'")
+                raise NotAnExcelFileError(f"No sheets found in {excel_file.name!r}")
             sheets = [wb.active.title if wb.active else wb.sheetnames[0]]
 
         output_path = Path(output) if output is not None else None
@@ -175,16 +180,13 @@ def convert_batch(
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    excel_files = [
-        f for f in folder.iterdir()
-        if f.is_file() and f.suffix.lower() in SUPPORTED_EXTS
-    ]
+    excel_files = list(iter_excels(folder, SUPPORTED_EXTS))
 
     if not excel_files:
         premature_err.add_error(ValueError(f"No Excel files found in: {folder}"))
         raise premature_err
 
-    errors: List[Tuple[Path, Exception]] = []
+    errors: List[Tuple[Path, RuntimeError]] = []
 
     for excel_file in excel_files:
         try:
