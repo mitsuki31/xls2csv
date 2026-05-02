@@ -16,6 +16,8 @@ from xls2csv.utils import (
     PathLike,
     format_output_name,
     print_summary,
+    is_excel_file,
+    iter_excels,
 )
 
 # .xls is not supported due to legacy format and openpyxl limitation
@@ -44,22 +46,25 @@ def convert_single(
 
     Raises:
         FileNotFoundError: If the Excel file is not found.
-        ValueError: If the sheet name is not found in the Excel file.
+        NoSheetFoundError: If the Excel file does not contain any sheets.
+        NotAnExcelFileError: If the given file is not an Excel file.
+        OutputFileExistsError: If the output file already exists and overwrite is False.
+        XLS2CSVError: If a single output CSV path cannot be used with multiple sheets.
 
-    Returns:
-        None
-
-    Notes:
-        - If `output` is a folder, the CSV file will be saved in that folder.
-        - If `output` is a file, the CSV file will be saved in that file.
-        - If `output` is not specified, the CSV file will be saved in the same folder as the Excel file.
-        - If `all_sheets` is set to True, all sheets will be converted to CSV files.
-        - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
+    Note:
+    - If `output` is a folder, the CSV file will be saved in that folder.
+    - If `output` is a file, the CSV file will be saved in that file.
+    - If `output` is not specified, the CSV file will be saved in the same folder as the Excel file.
+    - If `all_sheets` is set to True, all sheets will be converted to CSV files.
+    - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
     """
     excel_file = Path(excel_file)
 
     if not excel_file.exists():
         raise FileNotFoundError(f"Excel file not found: {excel_file}")
+
+    if not is_excel_file(excel_file, SUPPORTED_EXTS):
+        raise NotAnExcelFileError("Given file is not an Excel files", filepath=excel_file)
 
     wb = load_workbook(excel_file, data_only=True, read_only=True)
     try:
@@ -72,7 +77,7 @@ def convert_single(
         else:
             if not wb.sheetnames:
                 # For edge case; typically, there's no Excel file without a sheet inside
-                raise NotAnExcelFileError(f"No sheets found in '{excel_file.name}'")
+                raise NotAnExcelFileError(f"No sheets found in {excel_file.name!r}")
             sheets = [wb.active.title if wb.active else wb.sheetnames[0]]
 
         output_path = Path(output) if output is not None else None
@@ -146,16 +151,15 @@ def convert_batch(
 
     Raises:
         FileNotFoundError: If the folder is not found.
-        ValueError: If the sheet name is not found in the Excel file.
+        NotADirectoryError: If the given path is not a directory.
+        ValueError: If no Excel files are found in the folder.
+        BatchProcessingError: If any of the Excel files fail to convert.
 
-    Returns:
-        None
-
-    Notes:
-        - If `output` is a folder, the CSV file will be saved in that folder.
-        - If `output` is not specified, the CSV file will be saved in the same folder.
-        - If `all_sheets` is set to True, all sheets will be converted to CSV files.
-        - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
+    Note:
+    - If `output` is a folder, the CSV file will be saved in that folder.
+    - If `output` is not specified, the CSV file will be saved in the same folder.
+    - If `all_sheets` is set to True, all sheets will be converted to CSV files.
+    - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
     """
     folder = Path(folder)
     premature_err = BatchProcessingError("Premature exit (precondition not met)")
@@ -175,16 +179,13 @@ def convert_batch(
 
     output_path.mkdir(parents=True, exist_ok=True)
 
-    excel_files = [
-        f for f in folder.iterdir()
-        if f.is_file() and f.suffix.lower() in SUPPORTED_EXTS
-    ]
+    excel_files = list(iter_excels(folder, SUPPORTED_EXTS))
 
     if not excel_files:
         premature_err.add_error(ValueError(f"No Excel files found in: {folder}"))
         raise premature_err
 
-    errors: List[Tuple[Path, Exception]] = []
+    errors: List[Tuple[Path, RuntimeError]] = []
 
     for excel_file in excel_files:
         try:
