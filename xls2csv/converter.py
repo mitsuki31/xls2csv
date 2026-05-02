@@ -46,17 +46,17 @@ def convert_single(
 
     Raises:
         FileNotFoundError: If the Excel file is not found.
-        ValueError: If the sheet name is not found in the Excel file.
+        NoSheetFoundError: If the Excel file does not contain any sheets.
+        NotAnExcelFileError: If the given file is not an Excel file.
+        OutputFileExistsError: If the output file already exists and overwrite is False.
+        XLS2CSVError: If a single output CSV path cannot be used with multiple sheets.
 
-    Returns:
-        None
-
-    Notes:
-        - If `output` is a folder, the CSV file will be saved in that folder.
-        - If `output` is a file, the CSV file will be saved in that file.
-        - If `output` is not specified, the CSV file will be saved in the same folder as the Excel file.
-        - If `all_sheets` is set to True, all sheets will be converted to CSV files.
-        - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
+    Note:
+    - If `output` is a folder, the CSV file will be saved in that folder.
+    - If `output` is a file, the CSV file will be saved in that file.
+    - If `output` is not specified, the CSV file will be saved in the same folder as the Excel file.
+    - If `all_sheets` is set to True, all sheets will be converted to CSV files.
+    - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
     """
     excel_file = Path(excel_file)
 
@@ -151,16 +151,15 @@ def convert_batch(
 
     Raises:
         FileNotFoundError: If the folder is not found.
-        ValueError: If the sheet name is not found in the Excel file.
+        NotADirectoryError: If the given path is not a directory.
+        ValueError: If no Excel files are found in the folder.
+        BatchProcessingError: If any of the Excel files fail to convert.
 
-    Returns:
-        None
-
-    Notes:
-        - If `output` is a folder, the CSV file will be saved in that folder.
-        - If `output` is not specified, the CSV file will be saved in the same folder.
-        - If `all_sheets` is set to True, all sheets will be converted to CSV files.
-        - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
+    Note:
+    - If `output` is a folder, the CSV file will be saved in that folder.
+    - If `output` is not specified, the CSV file will be saved in the same folder.
+    - If `all_sheets` is set to True, all sheets will be converted to CSV files.
+    - If both `all_sheets` and `sheet` are specified, `all_sheets` will take precedence over sheet.
     """
     folder = Path(folder)
     premature_err = BatchProcessingError("Premature exit (precondition not met)")
