@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import (
     Callable,
     Generator,
-    LiteralString,
     Optional,
     Set,
     Tuple,
@@ -13,8 +12,8 @@ from typing import (
 
 PathLike: TypeAlias = Union[str, Path]
 
-DEFAULT_TEMPLATE: LiteralString = "%(name)-[%(sheet)].%(ext)"
-SUPPORTED_PLACEHOLDERS: Set[LiteralString] = {
+DEFAULT_TEMPLATE: str = "%(name)-[%(sheet)].%(ext)"
+SUPPORTED_PLACEHOLDERS: Set[str] = {
     "%(name)", "%(ext)", "%(sheet)",
     "%(date)", "%(year)", "%(month)",
     "%(day)", "%(day_s)",

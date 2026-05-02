@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import Optional, Set, List, LiteralString, Tuple
+from typing import Optional, Set, List, Tuple
 
 from openpyxl import load_workbook
 
@@ -21,7 +21,7 @@ from xls2csv.utils import (
 )
 
 # .xls is not supported due to legacy format and openpyxl limitation
-SUPPORTED_EXTS: Set[LiteralString] = { ".xlsx", ".xlsb", ".xlsm" }
+SUPPORTED_EXTS: Set[str] = { ".xlsx", ".xlsb", ".xlsm" }
 
 def convert_single(
     excel_file: PathLike,
