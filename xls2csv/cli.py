@@ -24,7 +24,7 @@ from xls2csv.exception import (
     XLS2CSVError,
 )
 
-__VERSION__ = "0.3.0-dev0"
+__VERSION__ = "0.3.0"
 
 @click.command(context_settings={"help_option_names": ["-h", "--help"]})
 @click.argument("input_path", type=click.Path(path_type=Path))
