@@ -20,7 +20,7 @@ This tool provides a simple fallback mechanism:
 The focus is not feature richness, but **predictable, safe conversion**.
 
 > [!IMPORTANT]  
-> In case you don't know, converting Excel files to CSV format **will lose the formatting, formulas, etc**.
+> In case you didn't know, converting Excel files to CSV format **will lose the formatting, formulas, etc**.
 >
 > It will only stores the calculated values of the cells.
 
@@ -43,7 +43,6 @@ By converting to CSV, you can have an emergency backup of your Excel data that c
 | Excel Macro-Enabled Workbook  | `.xlsm`   | ✅        |
 | Excel Binary Workbook         | `.xlsb`   | ✅        |
 | Excel Open XML Spreadsheet    | `.ods`    | ❌        |
-
 
 ### Export Options
 
@@ -82,15 +81,27 @@ What began as a small utility script evolved into a dedicated CLI tool focused o
 
 ## Installation
 
+### Prerequisites
+
+Ensure you have [**Python 3.10**](https://www.python.org/downloads/) ([see release notes](https://www.python.org/downloads/release/python-31020/)) or higher installed.
+
+That's all you need, really.
+
 ### Option 1 — Recommended (`pipx`)
 
 [`pipx`](https://pipx.pypa.io/stable/) is a tool for installing and running Python applications in isolated environments. Best for Ubuntu 23.04+, Debian 12+, and Fedora 38+ (these are distros that adopts [PEP 668](https://peps.python.org/pep-0668/)).
 
 #### Install `pipx`
 
+For Unix users:
+
 ```bash
 sudo apt install pipx
 ```
+
+> [!NOTE]  
+> For **Termux** (Android) users, you don't need to use `sudo` to install package.  
+> Just run `pkg install pipx` instead.
 
 For Windows users:
 
@@ -99,8 +110,6 @@ python -m pip install pipx && python -m pipx ensurepath
 ```
 
 > Or, check [`pipx` installation guide](https://pipx.pypa.io/stable/how-to/install-pipx/) for more information on how to install `pipx`.
-
----
 
 #### Install `xls2csv`
 
@@ -130,54 +139,6 @@ After installation:
 
 ```bash
 xls2csv --version
-```
-
----
-
-### Option 3 — Manual (development setup)
-
-```bash
-git clone https://github.com/mitsuki31/xls2csv.git
-```
-
-```bash
-cd xls2csv
-```
-
-#### Setup
-
-<details>
-<summary>Unix</summary>
-
-```bash
-./setup.sh
-```
-
-</details>
-<details>
-<summary>Windows (PowerShell)</summary>
-
-```pwsh
-.\setup.ps1
-```
-
-</details>
-<details>
-<summary>Unix-like (alternative)</summary>
-
-```bash
-python -m venv .venv && \
-    . ./.venv/bin/activate && \
-    pip install -r requirements.txt
-```
-
-</details>
-<br />
-
-#### Run the CLI
-
-```bash
-python -m xls2csv.cli --version
 ```
 
 ---
@@ -255,22 +216,22 @@ xls2csv ./reports -o ./out
 ### Convert with template
 
 ```bash
-xls2csv report.xlsx -o 'output-%name%-%sheet%.csv'
+xls2csv report.xlsx -t 'output-%(name)-%(sheet).csv'
 ```
 
 ---
 
 ## Options & Behavior
 
-| Option                         | Description                                                        |
-| ------------------------------ | ------------------------------------------------------------------ |
-| `-o, --output`                 | Output file (single mode) or directory                             |
-| `-t, --template`               | Template for output file name (default: `%(name)-%(sheet).%(ext)`) |
-| `-s, --sheet`                  | Convert specific sheet                                             |
-| `--all-sheets`                 | Export all sheets                                                  |
-| `-f`, `--force`, `--overwrite` | Overwrite existing files                                           |
-| `-v`, `--version`              | Show version information                                           |
-| `--help`                       | Show help message                                                  |
+| Option                         | Description                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `-o, --output`                 | Output file (single mode) or directory                                 |
+| `-t, --template`               | Template for output file name (default: `'%(name)-[%(sheet)].%(ext)'`) |
+| `-s, --sheet`                  | Convert specific sheet                                                 |
+| `--all-sheets`                 | Export all sheets                                                      |
+| `-f`, `--force`, `--overwrite` | Overwrite existing files                                               |
+| `-v`, `--version`              | Show version information                                               |
+| `--help`                       | Show help message                                                      |
 
 ---
 
@@ -316,10 +277,10 @@ xls2csv report.xlsx -t 'output-%(name)-%(sheet).%(ext)'
 ```
 
 > [!TIP]  
-> The `%(date)` placeholder is a shortcut for `%(year)-%(month)-%(day)`.
+> The `%(date)` placeholder is a shortcut for `'%(year)-%(month)-%(day)'`.
 
 > [!NOTE]  
-> Default template string for the output file is `%(name)-[%(sheet)].%(ext)`.
+> Default template string for the output file is `'%(name)-[%(sheet)].%(ext)'`.
 >
 > Example output file:
 > ```text
@@ -330,27 +291,38 @@ xls2csv report.xlsx -t 'output-%(name)-%(sheet).%(ext)'
 
 ## Development
 
-Setup environment:
+### Setup virtual environment
 
 - Unix
   ```bash
   ./setup.sh && . .venv/bin/activate
   ```
+
 - Windows (PowerShell)
   ```pwsh
   .\setup.ps1
   ```
 
-Install locally:
+### Install dependencies
 
 ```bash
-pipx install -e .
+pip install -e '.[dev]'
 ```
 
-Run:
+### Run the CLI
 
 ```bash
 xls2csv --version
+```
+
+---
+
+## Testing
+
+All tests are located in the `tests/` directory. To run all tests, use `pytest`:
+
+```bash
+pytest -vv
 ```
 
 ---
